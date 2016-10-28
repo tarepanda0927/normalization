@@ -111,6 +111,7 @@ void main(int argc, char *argv[])
 		int xeRef = mhdI.size1();
 		int yeRef = mhdI.size2();
 		int zeRef = mhdI.size3();
+		int se = xeRef*yeRef*zeRef;
 		double xrRef = mhdI.reso1();
 		double yrRef = mhdI.reso2();
 		double zrRef = mhdI.reso3();
@@ -127,6 +128,11 @@ void main(int argc, char *argv[])
 		int tmp_size = (tmp * 2 + 1)*(tmp * 2 + 1)*(tmp * 2 + 1);
 		//std::vector<double> a_x, a_y, a_z, b_x, b_y, b_z;
 		double a_x = 0, a_y = 0, a_z = 0, b_x = 0, b_y = 0, b_z = 0;
+		//全学習ラベルで1だった画素保存配列
+		nari::vector<unsigned char> all_one(se,0);
+		nari::vector<unsigned char> S_seed(se);
+		nari::vector<unsigned char> B_seed(se);
+		//学習ループ
 		for (int j = 0; j < rcase.size(); j++) {
 			if (j == i)continue;  //テスト症例はスキップ
 			//正解ラベルを使ってきれいに位置合わせしてある学習症例を読み込む
@@ -180,8 +186,27 @@ void main(int argc, char *argv[])
 			b_x.push_back(preI[1][0]);
 			b_y.push_back(preI[1][1]);
 			b_z.push_back(preI[1][2]);*/
+
+			//各画素で
+			for (int k = 0; k < se; k++) {
+				all_one[k] += imgAL[k];
+			}
 		}
-		
+		//すべての学習データの正解ラベルが1だった画素のみ１をいれる
+		for (int k = 0; k < se; k++) {
+			if (all_one[k] == rcase.size() - 1) {
+				all_one[k] = 1;
+			}
+			else {
+				all_one[k] = 0;
+			}
+
+		}
+		nari::morphology::erosion (all_one.ptr(),S_seed.ptr(),input_info.erosion,xeRef,yeRef,zeRef);
+		nari::morphology::dilation(all_one.ptr(), B_seed.ptr(), input_info.dilation, xeRef, yeRef, zeRef);
+		mhdIL.save_mhd_and_image(S_seed, input_info.dir_seed + rcase[i] + "_seed.raw");
+		mhdIL.save_mhd_and_image(B_seed, input_info.dir_seed + rcase[i] + "_seed2.raw");
+
 		nari::vector<nari::vector<int>> preI;
 		nari::vector<int> disp(3);
 		disp[0] = round(a_x / (rcase.size() - 1));
@@ -200,17 +225,17 @@ void main(int argc, char *argv[])
 		std::sort(b_z.begin(), b_z.end());*/
 		/*int n = a_x.size();
 		if (n % 2 == 0) {
-			disp[0] = round((a_x[n / 2] + a_x[n / 2 + 1]) / 2);
-			disp[1] = round((a_y[n / 2] + a_y[n / 2 + 1]) / 2);
-			disp[2] = round((a_z[n / 2] + a_z[n / 2 + 1]) / 2);
+			disp[0] = round((a_x[n / 2-1] + a_x[n / 2]) / 2);
+			disp[1] = round((a_y[n / 2-1] + a_y[n / 2]) / 2);
+			disp[2] = round((a_z[n / 2-1] + a_z[n / 2]) / 2);
 			preI.push_back(disp);
-			disp[0] = round((b_x[n / 2] + b_x[n / 2 + 1]) / 2);
-			disp[1] = round((b_y[n / 2] + b_y[n / 2 + 1]) / 2);
-			disp[2] = round((b_z[n / 2] + b_z[n / 2 + 1]) / 2);
+			disp[0] = round((b_x[n / 2-1] + b_x[n / 2]) / 2);
+			disp[1] = round((b_y[n / 2-1] + b_y[n / 2]) / 2);
+			disp[2] = round((b_z[n / 2-1] + b_z[n / 2]) / 2);
 			preI.push_back(disp);
 		}
 		else {
-			int m = n / 2 + 1;
+			int m = n / 2;
 			disp[0] = (int)a_x[m];
 			disp[1] = (int)a_y[m];
 			disp[2] = (int)a_z[m];

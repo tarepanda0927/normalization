@@ -12,6 +12,7 @@
 struct info
 {
 	std::string dir_Ref;
+	std::string dir_seed;
 	std::string dir_mvd;
 	std::string dir_Ans;
 	std::string dir_out;
@@ -22,12 +23,15 @@ struct info
 	int rangex;
 	int rangey;
 	int rangez;
+	double erosion;
+	double dilation;
 
 	inline void input(const std::string &path)
 	{
 		nari::infocontroller info;
 		info.load(path);
 		dir_Ref = nari::file::add_delim(info.get_as_str("dir_Ref"));
+		dir_seed = nari::file::add_delim(info.get_as_str("dir_seed"));
 		dir_mvd = nari::file::add_delim(info.get_as_str("dir_mvd"));
 		dir_Ans = nari::file::add_delim(info.get_as_str("dir_Ans"));
 		dir_out = nari::file::add_delim(info.get_as_str("dir_out"));
@@ -38,7 +42,8 @@ struct info
 		rangex = info.get_as_int("range_x");
 		rangey = info.get_as_int("range_y");
 		rangez = info.get_as_int("range_z");
-
+		erosion = info.get_as_double("erosion");
+		dilation = info.get_as_double("dilation");
 	}
 };
 
